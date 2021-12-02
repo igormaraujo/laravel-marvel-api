@@ -25,6 +25,15 @@ class Character extends Model
         'etag',
     ];
 
+     /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var array
+     */
+    protected $hidden = [
+        'etag',
+    ];
+
     public function users()
     {
         return $this->belongsToMany(User::class);
