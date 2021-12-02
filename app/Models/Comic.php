@@ -39,4 +39,9 @@ class Comic extends Model
     {
         return $this->belongsToMany(User::class);
     }
+
+    public function characters()
+    {
+        return $this->belongsToMany(Character::class);
+    }
 }

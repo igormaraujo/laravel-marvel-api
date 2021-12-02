@@ -38,4 +38,9 @@ class Character extends Model
     {
         return $this->belongsToMany(User::class);
     }
+
+    public function comics()
+    {
+        return $this->belongsToMany(Comic::class);
+    }
 }
