@@ -18,6 +18,7 @@ class CreateCharactersTable extends Migration
             $table->string('name');
             $table->longText('description');
             $table->string('thumbnail');
+            $table->string('resourceURI');
             $table->string('etag');
             $table->timestamps();
         });

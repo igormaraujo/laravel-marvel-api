@@ -17,6 +17,7 @@ class Character extends Model
      * @var string[]
      */
     protected $fillable = [
+        'id',
         'name',
         'description',
         'resourceURI',
