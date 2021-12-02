@@ -24,4 +24,8 @@ class Character extends Model
         'etag',
     ];
 
+    public function users()
+    {
+        return $this->belongsToMany(User::class);
+    }
 }
