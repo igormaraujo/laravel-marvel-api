@@ -14,7 +14,6 @@ class CreateCharactersUsersTable extends Migration
     public function up()
     {
         Schema::create('characters_users', function (Blueprint $table) {
-            $table->id();
             $table->foreignId('character_id')->constrained();
             $table->foreignId('user_id')->constrained();
             $table->timestamps();
