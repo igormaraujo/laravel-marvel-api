@@ -46,4 +46,9 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Character::class);
     }
+
+    public function comics()
+    {
+        return $this->belongsToMany(Comic::class);
+    }
 }

@@ -34,4 +34,9 @@ class Comic extends Model
     protected $hidden = [
         'etag',
     ];
+
+    public function users()
+    {
+        return $this->belongsToMany(User::class);
+    }
 }
