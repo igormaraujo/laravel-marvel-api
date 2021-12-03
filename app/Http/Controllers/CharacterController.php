@@ -8,9 +8,20 @@ use App\Services\Marvel;
 use App\Http\Requests\CharacterRequest;
 use App\Models\Comic;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Auth;
 
 class CharacterController extends Controller
 {
+  /**
+     * Instantiate a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        $this->middleware('auth')->only('update', 'destroy');
+    }
+
   /**
    * Display a listing of the resource.
    *
@@ -123,7 +134,6 @@ class CharacterController extends Controller
       Comic::upsert($comics, ['id'], ['title', 'issn', 'description', 'resourceURI', 'thumbnail']);
       $character->comics()->sync(array_map(fn ($comic) => $comic['id'], $comics));
     }
-    // ddd($character->comics()->get());
     switch ($encoding) {
       case 'gzip':
         $result = gzencode(
@@ -140,14 +150,26 @@ class CharacterController extends Controller
   }
 
   /**
-   * Update the specified resource in storage.
+   * Add Character as favorite to logged user .
    *
-   * @param  \Illuminate\Http\Request  $request
    * @param  \App\Models\Character  $character
    * @return \Illuminate\Http\Response
    */
-  public function update(Request $request, Character $character)
+  public function update(Character $character)
   {
-    //
+    Auth::user()->characters()->attach($character->id);
+    return response()->json([], 204);
+  }
+
+  /**
+   * Remove Cahracter as favorite to logged user.
+   *
+   * @param  \App\Models\Character  $character
+   * @return \Illuminate\Http\Response
+   */
+  public function destroy(Character $character)
+  {
+    Auth::user()->characters()->detach($character->id);
+    return response()->json([], 204);
   }
 }

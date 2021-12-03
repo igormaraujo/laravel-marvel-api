@@ -22,6 +22,6 @@ Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth'])->name('dashboard');
 
-Route::resource('characters', CharacterController::class)->only(['index', 'show', 'update']);
+Route::resource('characters', CharacterController::class)->only(['index', 'show', 'update', 'destroy']);
 
 require __DIR__.'/auth.php';
