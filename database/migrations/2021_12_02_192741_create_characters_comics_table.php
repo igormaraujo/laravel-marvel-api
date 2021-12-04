@@ -13,10 +13,10 @@ class CreateCharactersComicsTable extends Migration
      */
     public function up()
     {
-        Schema::create('characters_comics', function (Blueprint $table) {
+        Schema::create('character_comic', function (Blueprint $table) {
+            $table->primary(['character_id','comic_id']);
             $table->foreignId('character_id')->constrained();
             $table->foreignId('comic_id')->constrained();
-            $table->timestamps();
         });
     }
 
@@ -27,6 +27,6 @@ class CreateCharactersComicsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('characters_comics');
+        Schema::dropIfExists('character_comic');
     }
 }

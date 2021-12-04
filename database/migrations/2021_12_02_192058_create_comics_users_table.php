@@ -6,27 +6,27 @@ use Illuminate\Support\Facades\Schema;
 
 class CreateComicsUsersTable extends Migration
 {
-    /**
-     * Run the migrations.
-     *
-     * @return void
-     */
-    public function up()
-    {
-        Schema::create('comics_users', function (Blueprint $table) {
-            $table->foreignId('comic_id')->constrained();
-            $table->foreignId('user_id')->constrained();
-            $table->timestamps();
-        });
-    }
+  /**
+   * Run the migrations.
+   *
+   * @return void
+   */
+  public function up()
+  {
+    Schema::create('comic_user', function (Blueprint $table) {
+      $table->primary(['comic_id', 'user_id']);
+      $table->foreignId('comic_id')->constrained();
+      $table->foreignId('user_id')->constrained();
+    });
+  }
 
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
-    public function down()
-    {
-        Schema::dropIfExists('comics_users');
-    }
+  /**
+   * Reverse the migrations.
+   *
+   * @return void
+   */
+  public function down()
+  {
+    Schema::dropIfExists('comic_user');
+  }
 }
