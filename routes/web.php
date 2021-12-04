@@ -22,6 +22,7 @@ Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth'])->name('dashboard');
 
+Route::get('/characters/favorites', [CharacterController::class, 'favorites'])->middleware(['auth'])->name('characters.favorite');
 Route::resource('characters', CharacterController::class)->only(['index', 'show', 'update', 'destroy']);
 
 require __DIR__.'/auth.php';

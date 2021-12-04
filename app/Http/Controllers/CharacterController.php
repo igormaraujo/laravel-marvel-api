@@ -172,4 +172,9 @@ class CharacterController extends Controller
     Auth::user()->characters()->detach($character->id);
     return response()->json([], 204);
   }
+
+  public function favorites()
+  {
+    return response()->json(Auth::user()->characters()->pluck('character_id'), 200);
+  }
 }
