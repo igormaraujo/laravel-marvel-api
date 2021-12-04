@@ -13,14 +13,14 @@ use Illuminate\Support\Facades\Auth;
 class CharacterController extends Controller
 {
   /**
-     * Instantiate a new controller instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        $this->middleware('auth')->only('update', 'destroy');
-    }
+   * Instantiate a new controller instance.
+   *
+   * @return void
+   */
+  public function __construct()
+  {
+    $this->middleware('auth')->only('update', 'destroy');
+  }
 
   /**
    * Display a listing of the resource.
@@ -112,7 +112,8 @@ class CharacterController extends Controller
         'thumbnail' => $response["data"]["results"][0]["thumbnail"]["path"] . "/portrait_uncanny." . $response["data"]["results"][0]["thumbnail"]["extension"],
         'etag' => $response["etag"],
       ]);
-
+    }
+    if($character->comics()->count() < 2) {
       $offset = 0;
       $comics = [];
       do {
@@ -130,7 +131,7 @@ class CharacterController extends Controller
           ];
         }
         $offset += 100;
-      } while($offset < $total);
+      } while ($offset < $total);
       Comic::upsert($comics, ['id'], ['title', 'issn', 'description', 'resourceURI', 'thumbnail']);
       $character->comics()->sync(array_map(fn ($comic) => $comic['id'], $comics));
     }
