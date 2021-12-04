@@ -24,5 +24,7 @@ Route::get('/dashboard', function () {
 
 Route::get('/characters/favorites', [CharacterController::class, 'favorites'])->middleware(['auth'])->name('characters.favorite');
 Route::resource('characters', CharacterController::class)->only(['index', 'show', 'update', 'destroy']);
+Route::get('/comics/favorites', [ComicController::class, 'favorites'])->middleware(['auth'])->name('comics.favorite');
+Route::resource('comics', ComicController::class)->only(['index', 'show', 'update', 'destroy']);
 
 require __DIR__.'/auth.php';
