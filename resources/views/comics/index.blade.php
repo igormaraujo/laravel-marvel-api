@@ -4,9 +4,6 @@
       Comics
     </h2>
   </x-slot>
-
-
-  <!-- This example requires Tailwind CSS v2.0+ -->
   <div class="flex flex-col">
     <div class="flex">
       <input type="text" name="search" id="search"
@@ -37,8 +34,8 @@
               @foreach ($comics['results'] as $comic)
                 <tr>
                   <td class="whitespace-nowrap pl-4">
-                    <button type="button" id="{{ $comic['id'] }}" onclick="like(this.id)"
-                      class="bg-white p-1 rounded-full text-gray-400 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-red-800 focus:ring-white mx-auto">
+                    <button type="button" id="{{ $comic['id'] }}" onclick="like(this)"
+                      class="heart-button bg-white p-1 rounded-full text-gray-400 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-red-800 focus:ring-white mx-auto">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
                         fill="currentColor">
                         <path fill-rule="evenodd"
@@ -62,7 +59,7 @@
                     </div>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <a href="#" class="text-red-600 hover:text-red-900">View</a>
+                    <a href="{{route('comics.show', [$comic['id']])}}" class="text-red-600 hover:text-red-900">View</a>
                   </td>
                 </tr>
               @endforeach
@@ -240,15 +237,43 @@
           break;
       }
     }
-    async function like(id) {
-      const response = await fetch('/comics/' + id, {
-        method: 'PUT',
+    async function like(heart) {
+      const add = heart.classList.contains('text-gray-400');
+      const response = await fetch('/comics/' + heart.id, {
+        method: add ? 'PUT' : 'DELETE',
         headers: {
           'X-CSRF-TOKEN': '{{ csrf_token() }}',
           'Accept': 'application/json',
           'X-Requested-With': 'XMLHttpRequest'
         }
       });
+      if (response.status == 204) {
+        if (add) {
+          heart.classList.remove('text-gray-400', 'hover:text-red-500');
+          heart.classList.add('text-red-500', 'hover:text-gray-400');
+        } else {
+          heart.classList.remove('text-red-500', 'hover:text-gray-400');
+          heart.classList.add('text-gray-400', 'hover:text-red-500');
+        }
+      }
     }
+    window.onload = async function() {
+      const response = await fetch('/comics/favorites', {
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      });
+      if (response.status == 200) {
+        const data = await response.json();
+        const hearts = document.getElementsByClassName('heart-button');
+        for (let i = 0; i < hearts.length; i++) {
+          if (data.includes(parseInt(hearts[i].id))) {
+            hearts[i].classList.remove('text-gray-400','hover:text-red-500');
+            hearts[i].classList.add('hover:text-gray-400', 'text-red-500');
+          }
+        }
+      }
+    };
   </script>
 </x-guest-layout>
