@@ -25,8 +25,8 @@ class ComicRequest extends FormRequest
     public function rules()
     {
         return [
-            'nameStartsWith'  => 'required',
-            'orderBy'  => ['required', Rule::in(['name', '-name', 'modified', '-modified'])],
+            'titleStartsWith'  => 'required',
+            'orderBy'  => ['required', Rule::in(['title', '-title'])],
             'limit'  => 'required|integer|max:100|min:1',
             'offset'  => 'required|integer|min:0',
         ];

@@ -55,6 +55,14 @@ class ComicController extends Controller
     if ($data->failed()) {
       return $data->body();
     }
+    $current = (int) ($params["offset"] + $params["limit"]) / $params["limit"];
+    $pagination = [
+      'first' => 1,
+      'previus' => $current - 1,
+      'current' => $current,
+      'next' => $current + 1,
+      'last' => (int) ceil($data->json()["data"]["total"] / $params["limit"]),
+    ];
     switch ($type . '-' . $encoding) {
       case 'json-gzip':
         $result = gzencode($data->body(), 3);
@@ -66,13 +74,13 @@ class ComicController extends Controller
         return response($result, 200)->header('Content-type', 'application/json');
       case 'html-gzip':
         $result = gzencode(
-          view('comics.index', ['comics' => $data->json()["data"]])->render(),
+          view('comics.index', ['comics' => $data->json()["data"], 'pagination' => $pagination, 'params' => $request->safe()->except(['titleStartsWith'])])->render(),
           3
         );
         Cache::put($key, $result, now()->addHours(5));
         return response($result, 200)->header('Content-Encoding', 'gzip');
       case 'html-none':
-        $result = view('comics.index', ['comics' => $data->json()["data"]])->render();
+        $result = view('comics.index', ['comics' => $data->json()["data"], 'pagination' => $pagination, 'params' => $request->safe()->except(['titleStartsWith'])])->render();
         Cache::put($key, $result, now()->addHours(5));
         return response($result, 200);
     }
