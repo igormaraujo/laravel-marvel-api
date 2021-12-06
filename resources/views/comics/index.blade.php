@@ -11,13 +11,11 @@
     <div class="flex">
       <input type="text" name="search" id="search"
         class="focus:ring-red-500 focus:border-red-500 flex-1 block w-full rounded-none rounded-r-md border-gray-300 py-4 my-4"
-        placeholder="Search by name"
-        onkeyup="searchComics(event)">
-      <select name="limit" id="limit"
-      onchange="changeOrder(event)"
+        placeholder="Search by name" onkeyup="searchComics(event)">
+      <select name="limit" id="limit" onchange="changeOrder(event)"
         class="focus:ring-red-500 focus:border-red-500 border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 my-4"">
-        <option value="A-Z"> A-Z</option>
-        <option value="Z-A" @if(request()->get('orderBy') == '-title') selected @endif>Z-A</option>
+        <option value=" A-Z"> A-Z</option>
+        <option value="Z-A" @if (request()->get('orderBy') == '-title') selected @endif>Z-A</option>
       </select>
     </div>
     <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
@@ -39,7 +37,7 @@
               @foreach ($comics['results'] as $comic)
                 <tr>
                   <td class="whitespace-nowrap pl-4">
-                    <button type="button"
+                    <button type="button" id="{{ $comic['id'] }}" onclick="like(this.id)"
                       class="bg-white p-1 rounded-full text-gray-400 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-red-800 focus:ring-white mx-auto">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20"
                         fill="currentColor">
@@ -70,7 +68,18 @@
               @endforeach
             </tbody>
           </table>
-          <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+          <div @class([
+              'hidden' => $comics['total'] != 0,
+              'flex justify-center bg-gray-50',
+          ])>
+            <p class="text-base text-gray-400 py-5">
+              No comics found
+            </p>
+          </div>
+          <div @class([
+              'hidden' => $comics['total'] == 0,
+              'bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6',
+          ])>
             <div class="flex-1 flex justify-between sm:hidden">
               <a href="#"
                 class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
@@ -85,13 +94,12 @@
               <div>
                 <p class="text-sm text-gray-700">
                   Showing
-                  <select name="limit" id="limit"
-                    onchange="changePagination(event)"
+                  <select name="limit" id="limit" onchange="changePagination(event)"
                     class="focus:ring-red-500 focus:border-red-500 border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"">
                     <option value=" 10">10</option>
-                    <option value="25" @if(request()->get('limit') == '25') selected @endif>25</option>
-                    <option value="50" @if(request()->get('limit') == '50') selected @endif>50</option>
-                    <option value="100" @if(request()->get('limit') == '100') selected @endif>100</option>
+                    <option value="25" @if (request()->get('limit') == '25') selected @endif>25</option>
+                    <option value="50" @if (request()->get('limit') == '50') selected @endif>50</option>
+                    <option value="100" @if (request()->get('limit') == '100') selected @endif>100</option>
                   </select>
                   items,
                   <span class="font-medium">{{ $comics['offset'] + 1 }}</span>
@@ -105,11 +113,12 @@
               </div>
               <div>
                 <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                  <a href="{{route('comics.index', array_merge($params, ['offset' => ($pagination["previus"] - 1) * ($params['limit'] ?? 10) ]))}}"
+                  <a href="{{ route('comics.index', array_merge($params, ['offset' => ($pagination['previus'] - 1) * ($params['limit'] ?? 10)])) }}"
                     @class([
-                      "cursor-default pointer-events-none" => $pagination["current"] == $pagination["first"],
-                      "hover:bg-gray-50" => $pagination["current"] != $pagination["first"],
-                      "relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500"
+                        'cursor-default pointer-events-none' =>
+                            $pagination['current'] == $pagination['first'],
+                        'hover:bg-gray-50' => $pagination['current'] != $pagination['first'],
+                        'relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500',
                     ])>
                     <span class="sr-only">Previous</span>
                     <!-- Heroicon name: solid/chevron-left -->
@@ -120,58 +129,56 @@
                         clip-rule="evenodd" />
                     </svg>
                   </a>
-                  <a href="{{route('comics.index', array_merge($params, ['offset' => ($pagination["first"] - 1) * ($params['limit'] ?? 10) ]))}}"
+                  <a href="{{ route('comics.index', array_merge($params, ['offset' => ($pagination['first'] - 1) * ($params['limit'] ?? 10)])) }}"
                     @class([
-                      'hidden' => $pagination["current"] == $pagination["first"],
-                      "bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium"
+                        'hidden' => $pagination['current'] == $pagination['first'],
+                        'bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium',
                     ])>
-                    {{ $pagination["first"] }}
+                    {{ $pagination['first'] }}
                   </a>
-                    <span
-                    @class([
-                      'hidden' => $pagination["previus"] <= $pagination["first"],
-                      "relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700"
-                    ])>
+                  <span @class([
+                      'hidden' => $pagination['previus'] <= $pagination['first'],
+                      'relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700',
+                  ])>
                     ...
                   </span>
-                  <a href="{{route('comics.index', array_merge($params, ['offset' => ($pagination["previus"] - 1) * ($params['limit'] ?? 10) ]))}}"
+                  <a href="{{ route('comics.index', array_merge($params, ['offset' => ($pagination['previus'] - 1) * ($params['limit'] ?? 10)])) }}"
                     @class([
-                      'hidden' => $pagination["previus"] <= $pagination["first"],
-                      "bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium"
+                        'hidden' => $pagination['previus'] <= $pagination['first'],
+                        'bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium',
                     ])>
-                    {{ $pagination["previus"] }}
+                    {{ $pagination['previus'] }}
                   </a>
                   <a href="#"
-                    class="z-10 bg-red-50 border-red-500 text-red-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium"
-                  >
-                    {{ $pagination["current"] }}
+                    class="z-10 bg-red-50 border-red-500 text-red-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                    {{ $pagination['current'] }}
                   </a>
-                  <a href="{{route('comics.index', array_merge($params, ['offset' => ($pagination["next"] - 1) * ($params['limit'] ?? 10) ]))}}"
+                  <a href="{{ route('comics.index', array_merge($params, ['offset' => ($pagination['next'] - 1) * ($params['limit'] ?? 10)])) }}"
                     @class([
-                      'hidden' => $pagination["next"] >= $pagination["last"] - 1,
-                      "bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium"
+                        'hidden' => $pagination['next'] >= $pagination['last'] - 1,
+                        'bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium',
                     ])>
-                    {{ $pagination["next"] }}
+                    {{ $pagination['next'] }}
                   </a>
-                  <span
-                    @class([
-                      'hidden' => $pagination["next"] >= $pagination["last"] - 1,
-                      "relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700"
-                    ])>
+                  <span @class([
+                      'hidden' => $pagination['next'] >= $pagination['last'] - 1,
+                      'relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700',
+                  ])>
                     ...
                   </span>
-                  <a href="{{route('comics.index', array_merge($params, ['offset' => ($pagination["last"] - 1) * ($params['limit'] ?? 10) ]))}}"
+                  <a href="{{ route('comics.index', array_merge($params, ['offset' => ($pagination['last'] - 1) * ($params['limit'] ?? 10)])) }}"
                     @class([
-                      'hidden' => $pagination["current"]== $pagination["last"],
-                      "bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium"
+                        'hidden' => $pagination['current'] == $pagination['last'],
+                        'bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium',
                     ])>
-                    {{ $pagination["last"] }}
+                    {{ $pagination['last'] }}
                   </a>
-                  <a href="{{route('comics.index', array_merge($params, ['offset' => ($pagination["next"] - 1) * ($params['limit'] ?? 10) ]))}}"
+                  <a href="{{ route('comics.index', array_merge($params, ['offset' => ($pagination['next'] - 1) * ($params['limit'] ?? 10)])) }}"
                     @class([
-                      "cursor-default pointer-events-none" => $pagination["current"] == $pagination["last"],
-                      "hover:bg-gray-50" => $pagination["current"] != $pagination["last"],
-                      "relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500"
+                        'cursor-default pointer-events-none' =>
+                            $pagination['current'] == $pagination['last'],
+                        'hover:bg-gray-50' => $pagination['current'] != $pagination['last'],
+                        'relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500',
                     ])>
                     <span class="sr-only">Next</span>
                     <!-- Heroicon name: solid/chevron-right -->
@@ -191,36 +198,57 @@
     </div>
   </div>
   <script>
-    function searchComics(evt){
+    function searchComics(evt) {
       if (evt.code == "Enter" || evt.code == "NumpadEnter") {
-        window.location.href = '{{route("comics.index", array_merge($params, ["offset" => 0]))}}'.replaceAll('&amp;','&') + '&titleStartsWith=' + evt.target.value;
+        window.location.href = '{{ route('comics.index', array_merge($params, ['offset' => 0])) }}'.replaceAll('&amp;',
+          '&') + '&titleStartsWith=' + evt.target.value;
       }
     }
-    function changePagination(evt){
+
+    function changePagination(evt) {
       switch (evt.target.value) {
         case '10':
-          window.location.href = "{{route('comics.index', array_merge($params, ['offset' => 0, 'limit' => 10]))}}".replaceAll('&amp;','&');
+          window.location.href = "{{ route('comics.index', array_merge($params, ['offset' => 0, 'limit' => 10])) }}"
+            .replaceAll('&amp;', '&');
           break;
         case '25':
-          window.location.href = "{{route('comics.index', array_merge($params, ['offset' => 0, 'limit' => 25]))}}".replaceAll('&amp;','&');
+          window.location.href = "{{ route('comics.index', array_merge($params, ['offset' => 0, 'limit' => 25])) }}"
+            .replaceAll('&amp;', '&');
           break;
         case '50':
-          window.location.href = "{{route('comics.index', array_merge($params, ['offset' => 0, 'limit' => 50]))}}".replaceAll('&amp;','&');
+          window.location.href = "{{ route('comics.index', array_merge($params, ['offset' => 0, 'limit' => 50])) }}"
+            .replaceAll('&amp;', '&');
           break;
         case '100':
-          window.location.href = "{{route('comics.index', array_merge($params, ['offset' => 0, 'limit' => 100]))}}".replaceAll('&amp;','&');
+          window.location.href = "{{ route('comics.index', array_merge($params, ['offset' => 0, 'limit' => 100])) }}"
+            .replaceAll('&amp;', '&');
           break;
       }
     }
-    function changeOrder(evt){
+
+    function changeOrder(evt) {
       switch (evt.target.value) {
         case 'A-Z':
-          window.location.href = '{{route("comics.index", array_merge($params, ["offset" => 0, "orderBy" => "title"]))}}'.replaceAll('&amp;','&');
+          window.location.href =
+            '{{ route('comics.index', array_merge($params, ['offset' => 0, 'orderBy' => 'title'])) }}'.replaceAll(
+              '&amp;', '&');
           break;
         case 'Z-A':
-          window.location.href = '{{route("comics.index", array_merge($params, ["offset" => 0, "orderBy" => "-title"]))}}'.replaceAll('&amp;','&');
+          window.location.href =
+            '{{ route('comics.index', array_merge($params, ['offset' => 0, 'orderBy' => '-title'])) }}'.replaceAll(
+              '&amp;', '&');
           break;
+      }
     }
-  }
+    async function like(id) {
+      const response = await fetch('/comics/' + id, {
+        method: 'PUT',
+        headers: {
+          'X-CSRF-TOKEN': '{{ csrf_token() }}',
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      });
+    }
   </script>
 </x-guest-layout>
