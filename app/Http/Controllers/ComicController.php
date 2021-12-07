@@ -20,6 +20,7 @@ class ComicController extends Controller
   public function __construct()
   {
     $this->middleware('auth')->only('update', 'destroy');
+    $this->middleware('cache.headers:public;max_age=900;etag')->only('index', 'show');
   }
 
   /**
@@ -53,7 +54,9 @@ class ComicController extends Controller
     }
     $data = Marvel::get('comics', $params);
     if ($data->failed() || gettype($data->json()) != "array" || $data->json() === []) {
-      $query = Comic::orderBy($params["orderBy"]);
+      $field = str_starts_with($params["orderBy"], '-') ? substr($params["orderBy"], 1) : $params["orderBy"];
+      $order = str_starts_with($params["orderBy"], '-') ? 'desc' : 'asc';
+      $query = Comic::orderBy($field, $order);
       if(array_key_exists('titleStartsWith', $params)) {
         $query->where('title', 'like', $params['titleStartsWith'] . '%');
       }

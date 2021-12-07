@@ -80,7 +80,7 @@
                   </tbody>
                 </table>
                 <div
-                  id="chracters-empty"
+                  id="characters-empty"
                   @class([
                     'hidden' => sizeof($characters) != 0,
                     'flex justify-center bg-gray-50',
