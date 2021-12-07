@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', HomeController::class);
+Route::get('/', HomeController::class)->name('home');
 Route::get('/favorites', FavoriteController::class)->middleware(['auth'])->name('favorites.index');
 Route::get('/characters/favorites', [CharacterController::class, 'favorites'])->middleware(['auth'])->name('characters.favorite');
 Route::resource('characters', CharacterController::class)->only(['index', 'show', 'update', 'destroy']);
