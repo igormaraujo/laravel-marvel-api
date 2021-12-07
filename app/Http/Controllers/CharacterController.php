@@ -54,7 +54,9 @@ class CharacterController extends Controller
     }
     $data = Marvel::get('characters', $params);
     if ($data->failed() || gettype($data->json()) != "array" || $data->json() === []) {
-      $query = Character::orderBy($params["orderBy"]);
+      $field = str_starts_with($params["orderBy"], '-') ? substr($params["orderBy"], 1) : $params["orderBy"];
+      $order = str_starts_with($params["orderBy"], '-') ? 'desc' : 'asc';
+      $query = Character::orderBy($field, $order);
       if(array_key_exists('nameStartsWith', $params)) {
         $query->where('name', 'like', $params['nameStartsWith'] . '%');
       }
