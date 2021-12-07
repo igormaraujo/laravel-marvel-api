@@ -11,6 +11,6 @@ class HomeController extends Controller
     {
       $comics = Comic::withCount('users')->orderBy('users_count','DESC')->limit(10)->get();
       $characters = Character::withCount('users')->orderBy('users_count','DESC')->limit(10)->get();
-      return view('home', ['comics' => $comics, 'characters' => $characters]);
+      return str_replace('&lt;csrf/&gt;', csrf_token(), view('home', ['comics' => $comics, 'characters' => $characters])->render());
     }
 }

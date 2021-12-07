@@ -1,10 +1,29 @@
-<x-guest-layout>
+<x-app-layout>
   <x-slot name="header">
     <h2 class="font-semibold text-xl text-gray-800 leading-tight">
       Comics Details
     </h2>
   </x-slot>
 
+  <div id="alert" class="bg-red-600 hidden">
+    <div class="max-w-7xl mx-auto py-3 px-3 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between flex-wrap">
+        <div class="w-0 flex-1 flex items-center">
+          <p id="alert-text" class="ml-3 font-medium text-white truncate">
+              It's looks like that some problem occurred while fetching data from Marvel API. We are showing a cached version of the data that can be outdated.
+          </p>
+        </div>
+        <div class="order-2 flex-shrink-0 sm:order-3 sm:ml-3">
+          <button type="button" class="-mr-1 flex p-2 rounded-md hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-white sm:-mr-2" onclick="document.getElementById('alert').classList.add('hidden')">
+            <span class="sr-only">Dismiss</span>
+            <svg class="h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <div class="bg-white">
     <div class="pt-6 grid grid-cols-1 lg:grid-cols-2">
@@ -59,7 +78,8 @@
                   <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
                 </svg>
               </a>
-              <button id="{{$comic->id}}" onclick="likeComic(this)" class="ml-3 px-3 py-2 rounded-md text-sm font-medium my-5 flex bg-white p-1 text-gray-400 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-red-800 focus:ring-white border border-gray-400">
+              <button id="{{ $comic->id }}" onclick="likeComic(this)"
+                class="ml-3 px-3 py-2 rounded-md text-sm font-medium my-5 flex bg-white p-1 text-gray-400 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-red-800 focus:ring-white border border-gray-400">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                   <path fill-rule="evenodd"
                     d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
@@ -146,67 +166,86 @@
       const response = await fetch('/characters/' + heart.id, {
         method: add ? 'PUT' : 'DELETE',
         headers: {
-          'X-CSRF-TOKEN': '{{ csrf_token() }}',
+          'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
           'Accept': 'application/json',
           'X-Requested-With': 'XMLHttpRequest'
         }
       });
-      if (response.status == 204) {
-        if (add) {
-          heart.classList.remove('text-gray-400', 'hover:text-red-500');
-          heart.classList.add('text-red-500', 'hover:text-gray-400');
-        } else {
-          heart.classList.remove('text-red-500', 'hover:text-gray-400');
-          heart.classList.add('text-gray-400', 'hover:text-red-500');
-        }
+      switch (response.status) {
+        case 204:
+          if (add) {
+            heart.classList.remove('text-gray-400', 'hover:text-red-500');
+            heart.classList.add('text-red-500', 'hover:text-gray-400');
+          } else {
+            heart.classList.remove('text-red-500', 'hover:text-gray-400');
+            heart.classList.add('text-gray-400', 'hover:text-red-500');
+          }
+          break;
+        case 401:
+          window.location.href = '/login';
+          break;
+        default:
+          document.getElementById('alert-text').innerText = 'Something went wrong, please try again later.';
+          const alert = document.getElementById('alert')
+          alert.classList.remove('hidden');
+          alert.scrollIntoView();
       }
     }
     async function likeComic(heart) {
-      const add = heart.innerHTML.includes('Add to favorites');
-      const response = await fetch('/comics/' + heart.id, {
-        method: add ? 'PUT' : 'DELETE',
-        headers: {
-          'X-CSRF-TOKEN': '{{ csrf_token() }}',
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest'
-        }
-      });
-      if (response.status == 204) {
-        if (add) {
-          heart.classList.remove('text-gray-400', 'hover:text-red-500');
-          heart.classList.add('text-red-500', 'hover:text-gray-400');
-          heart.innerHTML = heart.innerHTML.replace('Add to favorites', 'Remove from favorites');
-        } else {
-          heart.classList.remove('text-red-500', 'hover:text-gray-400');
-          heart.classList.add('text-gray-400', 'hover:text-red-500');
-          heart.innerHTML = heart.innerHTML.replace('Remove from favorites', 'Add to favorites');
+        const add = heart.innerHTML.includes('Add to favorites');
+        const response = await fetch('/comics/' + heart.id, {
+          method: add ? 'PUT' : 'DELETE',
+          headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        });
+        switch (response.status) {
+          case 204:
+            if (add) {
+              heart.classList.remove('text-gray-400', 'hover:text-red-500');
+              heart.classList.add('text-red-500', 'hover:text-gray-400');
+              heart.innerHTML = heart.innerHTML.replace('Add to favorites', 'Remove from favorites');
+            } else {
+              heart.classList.remove('text-red-500', 'hover:text-gray-400');
+              heart.classList.add('text-gray-400', 'hover:text-red-500');
+              heart.innerHTML = heart.innerHTML.replace('Remove from favorites', 'Add to favorites');
+            }
+            break;
+          case 401:
+            window.location.href = '/login';
+            break;
+          default:
+            document.getElementById('alert-text').innerText = 'Something went wrong, please try again later.';
+            const alert = document.getElementById('alert')
+            alert.classList.remove('hidden');
+            alert.scrollIntoView();
         }
       }
-    }
-
-    window.onload = async function() {
-      const response = await fetch('/favorites', {
-        headers: {
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest'
-        }
-      });
-      if (response.status == 200) {
-        const data = await response.json();
-        const hearts = document.getElementsByClassName('heart-button');
-        for (let i = 0; i < hearts.length; i++) {
-          if (data.characters.includes(parseInt(hearts[i].id))) {
-            hearts[i].classList.remove('text-gray-400', 'hover:text-red-500');
-            hearts[i].classList.add('hover:text-gray-400', 'text-red-500');
+      (async function() {
+        const response = await fetch('/favorites', {
+          headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        });
+        if (response.status == 200) {
+          const data = await response.json();
+          const hearts = document.getElementsByClassName('heart-button');
+          for (let i = 0; i < hearts.length; i++) {
+            if (data.characters.includes(parseInt(hearts[i].id))) {
+              hearts[i].classList.remove('text-gray-400', 'hover:text-red-500');
+              hearts[i].classList.add('hover:text-gray-400', 'text-red-500');
+            }
+          }
+          if (data.comics.includes({{ $comic->id }})) {
+            const heart = document.getElementById({{ $comic->id }});
+            heart.classList.remove('text-gray-400', 'hover:text-red-500');
+            heart.classList.add('text-red-500', 'hover:text-gray-400');
+            heart.innerHTML = heart.innerHTML.replace('Add to favorites', 'Remove from favorites');
           }
         }
-        if (data.comics.includes({{$comic->id}})) {
-          const heart = document.getElementById({{$comic->id}});
-          heart.classList.remove('text-gray-400', 'hover:text-red-500');
-          heart.classList.add('text-red-500', 'hover:text-gray-400');
-          heart.innerHTML = heart.innerHTML.replace('Add to favorites', 'Remove from favorites');
-        }
-      }
-    };
+      })();
   </script>
-</x-guest-layout>
+</x-app-layout>
