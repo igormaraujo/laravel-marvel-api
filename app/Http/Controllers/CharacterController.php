@@ -76,7 +76,7 @@ class CharacterController extends Controller
       ];
       $result = view('characters.index', ['cache'=> true, 'characters' => $data, 'pagination' => $pagination, 'params' => $request->validated()])->render();
       return response($result, 503);
-    // }
+    }
     $current = (int) ($params["offset"] + $params["limit"]) / $params["limit"];
     $pagination = [
       'first' => 1,
