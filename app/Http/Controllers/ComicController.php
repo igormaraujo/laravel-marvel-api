@@ -30,7 +30,7 @@ class ComicController extends Controller
   public function index(ComicRequest $request)
   {
     $default = [
-      'orderBy' => '-modified',
+      'orderBy' => 'title',
       'offset' => 0,
       'limit' => 10,
     ];
@@ -55,6 +55,14 @@ class ComicController extends Controller
     if ($data->failed()) {
       return $data->body();
     }
+    $current = (int) ($params["offset"] + $params["limit"]) / $params["limit"];
+    $pagination = [
+      'first' => 1,
+      'previus' => $current - 1,
+      'current' => $current,
+      'next' => $current + 1,
+      'last' => (int) ceil($data->json()["data"]["total"] / $params["limit"]),
+    ];
     switch ($type . '-' . $encoding) {
       case 'json-gzip':
         $result = gzencode($data->body(), 3);
@@ -66,13 +74,13 @@ class ComicController extends Controller
         return response($result, 200)->header('Content-type', 'application/json');
       case 'html-gzip':
         $result = gzencode(
-          view('comics.index', ['comics' => $data->json()["data"]])->render(),
+          view('comics.index', ['comics' => $data->json()["data"], 'pagination' => $pagination, 'params' => $request->safe()->except(['titleStartsWith'])])->render(),
           3
         );
         Cache::put($key, $result, now()->addHours(5));
         return response($result, 200)->header('Content-Encoding', 'gzip');
       case 'html-none':
-        $result = view('comics.index', ['comics' => $data->json()["data"]])->render();
+        $result = view('comics.index', ['comics' => $data->json()["data"], 'pagination' => $pagination, 'params' => $request->safe()->except(['titleStartsWith'])])->render();
         Cache::put($key, $result, now()->addHours(5));
         return response($result, 200);
     }
@@ -97,6 +105,53 @@ class ComicController extends Controller
           return response($cache, 200);
       }
     }
+    $comic = $this->retriveComic($comic_id);
+    switch ($encoding) {
+      case 'gzip':
+        $result = gzencode(
+          view('comics.show', ['comic' => $comic, 'characters' => $comic->characters()->get()])->render(),
+          3
+        );
+        Cache::put($key, $result, now()->addHours(5));
+        return response($result, 200)->header('Content-Encoding', 'gzip');
+      case 'none':
+        $result = view('comics.show', ['comic' => $comic, 'characters' => $comic->characters()->get()])->render();
+        Cache::put($key, $result, now()->addHours(5));
+        return response($result, 200);
+    }
+  }
+
+  /**
+   * Add Character as favorite to logged user .
+   *
+   * @return \Illuminate\Http\Response
+   */
+  public function update($comic_id)
+  {
+    $comic = $this->retriveComic($comic_id);
+    Auth::user()->comics()->attach($comic->id);
+    return response()->json([], 204);
+  }
+
+  /**
+   * Remove Cahracter as favorite to logged user.
+   *
+   * @param  \App\Models\Comic  $comic
+   * @return \Illuminate\Http\Response
+   */
+  public function destroy($comic_id)
+  {
+    $comic = $this->retriveComic($comic_id);
+    Auth::user()->comics()->detach($comic->id);
+    return response()->json([], 204);
+  }
+
+  public function favorites()
+  {
+    return response()->json(Auth::user()->comics()->pluck('comic_id'), 200);
+  }
+
+  private function retriveComic($comic_id){
     $comic = Comic::find($comic_id);
     if (!$comic) {
       $data = Marvel::get('comics/' . $comic_id);
@@ -135,47 +190,6 @@ class ComicController extends Controller
       Character::upsert($characters, ['id'], ['name', 'description', 'resourceURI', 'thumbnail']);
       $comic->characters()->sync(array_map(fn ($character) => $character['id'], $characters));
     }
-    switch ($encoding) {
-      case 'gzip':
-        $result = gzencode(
-          view('comics.show', ['comic' => $comic, 'characters' => $comic->characters()->get()])->render(),
-          3
-        );
-        Cache::put($key, $result, now()->addHours(5));
-        return response($result, 200)->header('Content-Encoding', 'gzip');
-      case 'none':
-        $result = view('comics.show', ['comic' => $comic, 'characters' => $comic->characters()->get()])->render();
-        Cache::put($key, $result, now()->addHours(5));
-        return response($result, 200);
-    }
-  }
-
-  /**
-   * Add Character as favorite to logged user .
-   *
-   * @param  \App\Models\Comic  $comic
-   * @return \Illuminate\Http\Response
-   */
-  public function update(Comic $comic)
-  {
-    Auth::user()->comics()->attach($comic->id);
-    return response()->json([], 204);
-  }
-
-  /**
-   * Remove Cahracter as favorite to logged user.
-   *
-   * @param  \App\Models\Comic  $comic
-   * @return \Illuminate\Http\Response
-   */
-  public function destroy(Comic $comic)
-  {
-    Auth::user()->comics()->detach($comic->id);
-    return response()->json([], 204);
-  }
-
-  public function favorites()
-  {
-    return response()->json(Auth::user()->comics()->pluck('comic_id'), 200);
+    return $comic;
   }
 }
