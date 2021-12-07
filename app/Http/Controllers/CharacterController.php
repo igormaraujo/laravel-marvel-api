@@ -20,6 +20,7 @@ class CharacterController extends Controller
   public function __construct()
   {
     $this->middleware('auth')->only('update', 'destroy');
+    $this->middleware('cache.headers:public;max_age=900;etag')->only('index', 'show');
   }
 
   /**
