@@ -8,7 +8,7 @@
     <div class="flex">
       <input type="text" name="search" id="search"
         class="focus:ring-red-500 focus:border-red-500 flex-1 block w-full rounded-none rounded-r-md border-gray-300 py-4 my-4"
-        placeholder="Search by name" onkeyup="searchComics(event)">
+        placeholder="Search by title" onkeyup="searchComics(event)">
       <select name="limit" id="limit" onchange="changeOrder(event)"
         class="focus:ring-red-500 focus:border-red-500 border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 my-4"">
         <option value=" A-Z"> A-Z</option>
