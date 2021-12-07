@@ -30,7 +30,7 @@ class ComicController extends Controller
   public function index(ComicRequest $request)
   {
     $default = [
-      'orderBy' => '-modified',
+      'orderBy' => 'title',
       'offset' => 0,
       'limit' => 10,
     ];
