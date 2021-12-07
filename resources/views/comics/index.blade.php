@@ -1,9 +1,28 @@
-<x-guest-layout>
+<x-app-layout>
   <x-slot name="header">
     <h2 class="font-semibold text-xl text-gray-800 leading-tight">
       Comics
     </h2>
   </x-slot>
+  <div id="alert" class="bg-red-600 hidden">
+    <div class="max-w-7xl mx-auto py-3 px-3 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between flex-wrap">
+        <div class="w-0 flex-1 flex items-center">
+          <p id="alert-text" class="ml-3 font-medium text-white truncate">
+              It's looks like that some problem occurred while fetching data from Marvel API. We are showing a cached version of the data that can be outdated.
+          </p>
+        </div>
+        <div class="order-2 flex-shrink-0 sm:order-3 sm:ml-3">
+          <button type="button" class="-mr-1 flex p-2 rounded-md hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-white sm:-mr-2" onclick="document.getElementById('alert').classList.add('hidden')">
+            <span class="sr-only">Dismiss</span>
+            <svg class="h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
   <div class="flex flex-col">
     <div class="flex">
       <input type="text" name="search" id="search"
@@ -59,7 +78,8 @@
                     </div>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <a href="{{route('comics.show', [$comic['id']])}}" class="text-red-600 hover:text-red-900">View</a>
+                    <a href="{{ route('comics.show', [$comic['id']]) }}"
+                      class="text-red-600 hover:text-red-900">View</a>
                   </td>
                 </tr>
               @endforeach
@@ -80,16 +100,15 @@
             <div class="flex-1 flex justify-between sm:hidden">
               <a href="{{ route('comics.index', array_merge($params, ['offset' => ($pagination['previus'] - 1) * ($params['limit'] ?? 10)])) }}"
                 @class([
-                  'hidden' => $pagination['current'] == $pagination['first'],
-                  "relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                ])
-                >
+                    'hidden' => $pagination['current'] == $pagination['first'],
+                    'relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50',
+                ])>
                 Previous
               </a>
               <a href="{{ route('comics.index', array_merge($params, ['offset' => ($pagination['next'] - 1) * ($params['limit'] ?? 10)])) }}"
                 @class([
-                  'hidden' => $pagination['current'] == $pagination['last'],
-                  "relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                    'hidden' => $pagination['current'] == $pagination['last'],
+                    'relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50',
                 ])>
                 Next
               </a>
@@ -248,24 +267,36 @@
       const add = heart.classList.contains('text-gray-400');
       const response = await fetch('/comics/' + heart.id, {
         method: add ? 'PUT' : 'DELETE',
+        redirect: 'manual',
         headers: {
-          'X-CSRF-TOKEN': '{{ csrf_token() }}',
+          'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
           'Accept': 'application/json',
           'X-Requested-With': 'XMLHttpRequest'
         }
       });
-      if (response.status == 204) {
-        if (add) {
-          heart.classList.remove('text-gray-400', 'hover:text-red-500');
-          heart.classList.add('text-red-500', 'hover:text-gray-400');
-        } else {
-          heart.classList.remove('text-red-500', 'hover:text-gray-400');
-          heart.classList.add('text-gray-400', 'hover:text-red-500');
-        }
+      switch (response.status) {
+        case 204:
+          if (add) {
+            heart.classList.remove('text-gray-400', 'hover:text-red-500');
+            heart.classList.add('text-red-500', 'hover:text-gray-400');
+          } else {
+            heart.classList.remove('text-red-500', 'hover:text-gray-400');
+            heart.classList.add('text-gray-400', 'hover:text-red-500');
+          }
+          break;
+        case 401:
+          window.location.href = '/login';
+          break;
+        default:
+          document.getElementById('alert-text').innerText = 'Something went wrong, please try again later.';
+          const alert = document.getElementById('alert')
+          alert.classList.remove('hidden');
+          alert.scrollIntoView();
       }
     }
-    window.onload = async function() {
+    (async function() {
       const response = await fetch('/comics/favorites', {
+        redirect: 'manual',
         headers: {
           'Accept': 'application/json',
           'X-Requested-With': 'XMLHttpRequest'
@@ -276,11 +307,11 @@
         const hearts = document.getElementsByClassName('heart-button');
         for (let i = 0; i < hearts.length; i++) {
           if (data.includes(parseInt(hearts[i].id))) {
-            hearts[i].classList.remove('text-gray-400','hover:text-red-500');
+            hearts[i].classList.remove('text-gray-400', 'hover:text-red-500');
             hearts[i].classList.add('hover:text-gray-400', 'text-red-500');
           }
         }
       }
-    };
+    })();
   </script>
-</x-guest-layout>
+</x-app-layout>
