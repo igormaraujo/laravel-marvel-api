@@ -4,13 +4,18 @@
       Comics
     </h2>
   </x-slot>
-  <div id="alert" class="bg-red-600 hidden">
+  <div id="alert" @class(["hidden" => !($cache ?? false), "bg-red-600"])>
     <div class="max-w-7xl mx-auto py-3 px-3 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between flex-wrap">
         <div class="w-0 flex-1 flex items-center">
-          <p id="alert-text" class="ml-3 font-medium text-white truncate">
-              It's looks like that some problem occurred while fetching data from Marvel API. We are showing a cached version of the data that can be outdated.
+          <p id="alert-text" class="ml-3 font-medium text-white">
+              It's looks like that some problem occurred while fetching data from Marvel API. We are showing a cached version of the data that may be outdated.
           </p>
+        </div>
+        <div class="order-3 mt-2 flex-shrink-0 w-full sm:order-2 sm:mt-0 sm:w-auto">
+          <button onclick="document.location.reload(true);" class="flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-red-600 bg-white hover:bg-red-50">
+            Try again
+          </button>
         </div>
         <div class="order-2 flex-shrink-0 sm:order-3 sm:ml-3">
           <button type="button" class="-mr-1 flex p-2 rounded-md hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-white sm:-mr-2" onclick="document.getElementById('alert').classList.add('hidden')">
@@ -67,7 +72,7 @@
                     <div class="flex items-center">
                       <div class="flex-shrink-0 h-10 w-10">
                         <img class="h-10 w-10"
-                          src="{{ $comic['thumbnail']['path'] . '/standard_small.' . $comic['thumbnail']['extension'] }}"
+                          src="{{ gettype($comic['thumbnail']) == 'string' ? str_replace('portrait_uncanny', 'standard_small',$comic['thumbnail']) : $comic['thumbnail']['path'] . '/standard_small.' . $comic['thumbnail']['extension'] }}"
                           alt="{{ $comic['title'] }}">
                       </div>
                       <div class="ml-4">
@@ -223,7 +228,7 @@
   <script>
     function searchComics(evt) {
       if (evt.code == "Enter" || evt.code == "NumpadEnter") {
-        window.location.href = '{{ route('comics.index', array_merge($params, ['offset' => 0])) }}'.replaceAll('&amp;',
+        window.location.href = '{{ route('comics.index', array_merge($params, ['offset' => 0, 'titleStartsWith' => null])) }}'.replaceAll('&amp;',
           '&') + '&titleStartsWith=' + evt.target.value;
       }
     }

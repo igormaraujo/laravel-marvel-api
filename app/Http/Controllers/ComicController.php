@@ -52,8 +52,30 @@ class ComicController extends Controller
       }
     }
     $data = Marvel::get('comics', $params);
-    if ($data->failed()) {
-      return $data->body();
+    if ($data->failed() || gettype($data->json()) != "array" || $data->json() === []) {
+      $query = Comic::orderBy($params["orderBy"]);
+      if(array_key_exists('titleStartsWith', $params)) {
+        $query->where('title', 'like', $params['titleStartsWith'] . '%');
+      }
+      $total = $query->count();
+      $query->offset($params['offset']);
+      $query->limit($params['limit']);
+      $data = [
+        'results' => $query->get()->toArray(),
+        'count' => $query->count(),
+        'offset' => $params['offset'],
+        'total' => $total,
+      ];
+      $current = (int) ($params["offset"] + $params["limit"]) / $params["limit"];
+      $pagination = [
+        'first' => 1,
+        'previus' => $current - 1,
+        'current' => $current,
+        'next' => $current + 1,
+        'last' => (int) ceil($data["total"] / $params["limit"]),
+      ];
+      $result = view('comics.index', ['cache'=> true, 'comics' => $data, 'pagination' => $pagination, 'params' => $request->validated()])->render();
+      return response($result, 503);
     }
     $current = (int) ($params["offset"] + $params["limit"]) / $params["limit"];
     $pagination = [
@@ -74,13 +96,13 @@ class ComicController extends Controller
         return response($result, 200)->header('Content-type', 'application/json');
       case 'html-gzip':
         $result = gzencode(
-          view('comics.index', ['comics' => $data->json()["data"], 'pagination' => $pagination, 'params' => $request->safe()->except(['titleStartsWith'])])->render(),
+          view('comics.index', ['comics' => $data->json()["data"], 'pagination' => $pagination, 'params' => $request->validated()])->render(),
           3
         );
         Cache::put($key, $result, now()->addHours(5));
         return response($result, 200)->header('Content-Encoding', 'gzip');
       case 'html-none':
-        $result = view('comics.index', ['comics' => $data->json()["data"], 'pagination' => $pagination, 'params' => $request->safe()->except(['titleStartsWith'])])->render();
+        $result = view('comics.index', ['comics' => $data->json()["data"], 'pagination' => $pagination, 'params' => $request->validated()])->render();
         Cache::put($key, $result, now()->addHours(5));
         return response($result, 200);
     }
@@ -106,6 +128,9 @@ class ComicController extends Controller
       }
     }
     $comic = $this->retriveComic($comic_id);
+    if ($comic == null) {
+      abort(404);
+    }
     switch ($encoding) {
       case 'gzip':
         $result = gzencode(
@@ -129,6 +154,9 @@ class ComicController extends Controller
   public function update($comic_id)
   {
     $comic = $this->retriveComic($comic_id);
+    if($comic == null) {
+      return response()->json([], 404);
+    }
     Auth::user()->comics()->attach($comic->id);
     return response()->json([], 204);
   }
@@ -142,6 +170,9 @@ class ComicController extends Controller
   public function destroy($comic_id)
   {
     $comic = $this->retriveComic($comic_id);
+    if($comic == null) {
+      return response()->json([], 404);
+    }
     Auth::user()->comics()->detach($comic->id);
     return response()->json([], 204);
   }
@@ -155,8 +186,8 @@ class ComicController extends Controller
     $comic = Comic::find($comic_id);
     if (!$comic) {
       $data = Marvel::get('comics/' . $comic_id);
-      if ($data->failed()) {
-        return $data->body();
+      if ($data->failed() || gettype($data->json()) != "array" || $data->json() === []) {
+        return null;
       }
       $response = $data->json();
       $comic = Comic::create([
@@ -173,7 +204,11 @@ class ComicController extends Controller
       $offset = 0;
       $characters = [];
       do {
-        $response = Marvel::get('comics/' . $comic_id . '/characters', ['limit' => 100, 'offset' => $offset])->json();
+        $data = Marvel::get('comics/' . $comic_id . '/characters', ['limit' => 100, 'offset' => $offset]);
+        if ($data->failed() || gettype($data->json()) != "array" || $data->json() === []) {
+          return null;
+        }
+        $response = $data->json();
         $total = $response["data"]["total"];
         foreach ($response["data"]["results"] as $character) {
           $characters[] = [
