@@ -18,7 +18,7 @@ class FavoriteController extends Controller
       }
       $data = [
         'characters' => Auth::user()->characters()->get(),
-        'comics' => Auth::user()->comics()->get(),
+        'comics' => Auth::user()->comics()->get()
       ];
       return view('favorites', $data);
     }

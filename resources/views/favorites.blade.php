@@ -1,9 +1,28 @@
-<x-guest-layout>
+<x-app-layout>
   <x-slot name="header">
     <h2 class="font-semibold text-xl text-gray-800 leading-tight">
       My Favorites
     </h2>
   </x-slot>
+  <div id="alert" class="bg-red-600 hidden">
+    <div class="max-w-7xl mx-auto py-3 px-3 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between flex-wrap">
+        <div class="w-0 flex-1 flex items-center">
+          <p id="alert-text" class="ml-3 font-medium text-white truncate">
+              It's looks like that some problem occurred while fetching data from Marvel API. We are showing a cached version of the data that can be outdated.
+          </p>
+        </div>
+        <div class="order-2 flex-shrink-0 sm:order-3 sm:ml-3">
+          <button type="button" class="-mr-1 flex p-2 rounded-md hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-white sm:-mr-2" onclick="document.getElementById('alert').classList.add('hidden')">
+            <span class="sr-only">Dismiss</span>
+            <svg class="h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
   <div class="shadow-md">
     <div class="tab w-full overflow-hidden border-t">
       <input class="absolute opacity-0" id="tab-single-one" type="radio" name="tabs2">
@@ -165,22 +184,34 @@
     async function like(heart, resource) {
       const response = await fetch('/'+ resource +'/' + heart.id, {
         method: 'DELETE',
+        redirect: 'manual',
         headers: {
-          'X-CSRF-TOKEN': '{{ csrf_token() }}',
+          'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
           'Accept': 'application/json',
           'X-Requested-With': 'XMLHttpRequest'
         }
       });
-      if (response.status == 204) {
-        heart.parentElement.parentElement.classList.add('hidden')
-        const remaing = document.querySelectorAll('tr.'+resource+'-row:not(.hidden)').length
-        if (remaing == 0) {
-          document.getElementById(resource+'-empty').classList.remove('hidden')
-        }
+      switch (response.status) {
+        case 204:
+          heart.parentElement.parentElement.classList.add('hidden')
+          const remaing = document.querySelectorAll('tr.'+resource+'-row:not(.hidden)').length
+          if (remaing == 0) {
+            document.getElementById(resource+'-empty').classList.remove('hidden')
+          }
+          break;
+        case 401:
+          window.location.href = '/login';
+          break;
+        default:
+          document.getElementById('alert-text').innerText = 'Something went wrong, please try again later.';
+          const alert = document.getElementById('alert')
+          alert.classList.remove('hidden');
+          alert.scrollIntoView();
       }
     }
-    window.onload = async function() {
+    (async function() {
       const response = await fetch('/comics/favorites', {
+        redirect: 'manual',
         headers: {
           'Accept': 'application/json',
           'X-Requested-With': 'XMLHttpRequest'
@@ -196,7 +227,7 @@
           }
         }
       }
-    };
+    })();
   </script>
   <style>
     /* Tab content - closed */
@@ -288,4 +319,4 @@
     }
 
   </style>
-</x-guest-layout>
+</x-app-layout>
