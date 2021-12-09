@@ -135,6 +135,7 @@ return [
     */
 
     'providers' => [
+        Rollbar\Laravel\RollbarServiceProvider::class,
 
         /*
          * Laravel Framework Service Providers...
