@@ -30,6 +30,7 @@ This is [Laravel](https://laravel.com/) exemple app that uses the [Marvel API](h
 - Local database fallback in case of an unavailabilty of Marvel API.
 - The favorites are delivered by the local database (Still working even if reach the marvel api daily rate limit).
 - Client Browser cache with the HTTP cache-control header.
+- Cron Job daily to update the local database with modified data from Marvel API
 
 
 ## Run localy
