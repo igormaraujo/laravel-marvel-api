@@ -25,7 +25,7 @@ This is [Laravel](https://laravel.com/) exemple app that uses the [Marvel API](h
 
 ### Performance Improvements
 - Marvel API implemented as Service Provider with automatic retries.
-- Every seach are cached with redis.
+- Every seach are cached with redis (compiled view with gzip compression).
 - Every detail or favorite action, the data are copied for the local database(Mysql).
 - Local database fallback in case of an unavailabilty of Marvel API.
 - The favorites are delivered by the local database (Still working even if reach the marvel api daily rate limit).
