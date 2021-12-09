@@ -44,6 +44,10 @@ Rename `.env.example` to `.env`
 ```
 mv .env.example .env
 ```
+Generate a App Key
+```
+./vendor/bin/sail artisan key:generate
+```
 Add your Marvel public and private key to your `.env` file 
 ```
 echo 'MARVEL_PUBLIC_KEY=[[YOUR_PUBLIC_KEY_HERE]]' >> .env
